@@ -1,5 +1,6 @@
 import React from 'react';
 import ReceiptUploader from './ReceiptUploader';
+import ExpenseList from './ExpenseList';
 import { LayoutDashboard, FileText, Settings, BarChart2 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -53,10 +54,16 @@ export default function Dashboard() {
             <div className="absolute -right-16 -top-16 w-64 h-64 bg-white opacity-10 rounded-full blur-2xl"></div>
           </div>
           
-          {/* Uploader Section */}
-          <section>
-            <ReceiptUploader />
-          </section>
+          {/* Main Dashboard Layout */}
+          <div className="grid grid-cols-1 gap-8">
+            <section>
+              <ReceiptUploader />
+            </section>
+            
+            <section>
+              <ExpenseList />
+            </section>
+          </div>
           
         </div>
       </main>

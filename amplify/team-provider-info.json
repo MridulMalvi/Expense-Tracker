@@ -16,7 +16,17 @@
         "expensetracker222d1d7dce": {}
       },
       "function": {
-        "processReceipt": {}
+        "processReceipt": {
+          "deploymentBucketName": "amplify-expensetracker22-dev-6dc7c-deployment",
+          "s3Key": "amplify-builds/processReceipt-46746c7a6963454f6257-build.zip"
+        },
+        "S3Triggerbebbab94": {
+          "deploymentBucketName": "amplify-expensetracker22-dev-6dc7c-deployment",
+          "s3Key": "amplify-builds/S3Triggerbebbab94-6f756d38726767573641-build.zip"
+        }
+      },
+      "storage": {
+        "data": {}
       }
     }
   }

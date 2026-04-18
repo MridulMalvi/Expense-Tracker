@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda Function resource stack creation using Amplify CLI",
+  "Description": "{\"createdOn\":\"Windows\",\"createdBy\":\"Amplify\",\"createdWith\":\"14.3.0\",\"stackType\":\"function-Lambda\",\"metadata\":{\"whyContinueWithGen1\":\"I find the Gen 1 CLI easier to use\"}}",
   "Parameters": {
     "CloudWatchRule": {
       "Type": "String",
@@ -15,6 +15,10 @@
     },
     "s3Key": {
       "Type": "String"
+    },
+    "storagedataBucketName": {
+      "Type": "String",
+      "Default": "storagedataBucketName"
     }
   },
   "Conditions": {
@@ -69,6 +73,9 @@
             },
             "REGION": {
               "Ref": "AWS::Region"
+            },
+            "STORAGE_DATA_BUCKETNAME": {
+              "Ref": "storagedataBucketName"
             }
           }
         },
@@ -160,6 +167,63 @@
                   }
                 ]
               }
+            }
+          ]
+        }
+      }
+    },
+    "AmplifyResourcesPolicy": {
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "amplify-lambda-execution-policy",
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "s3:ListBucket",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "storagedataBucketName"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "storagedataBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
             }
           ]
         }

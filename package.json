@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-amplify/ui-react": "^6.15.3",
     "@aws-amplify/ui-react-storage": "^3.17.2",
+    "@aws-sdk/client-lex-runtime-v2": "^3.1032.0",
     "aws-amplify": "^6.16.4",
     "lucide-react": "^1.8.0",
     "react": "^19.2.4",

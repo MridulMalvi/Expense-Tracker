@@ -1,8 +1,14 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda resource stack creation using Amplify CLI",
+  "Description": "{\"createdOn\":\"Windows\",\"createdBy\":\"Amplify\",\"createdWith\":\"14.3.0\",\"stackType\":\"function-Lambda\",\"metadata\":{\"whyContinueWithGen1\":\"I find the Gen 1 CLI easier to use\"}}",
   "Parameters": {
     "env": {
+      "Type": "String"
+    },
+    "deploymentBucketName": {
+      "Type": "String"
+    },
+    "s3Key": {
       "Type": "String"
     }
   },
@@ -57,7 +63,15 @@
           ]
         },
         "Runtime": "nodejs22.x",
-        "Timeout": 25
+        "Timeout": 25,
+        "Code": {
+          "S3Bucket": {
+            "Ref": "deploymentBucketName"
+          },
+          "S3Key": {
+            "Ref": "s3Key"
+          }
+        }
       }
     },
     "LambdaExecutionRole": {

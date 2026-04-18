@@ -3,6 +3,7 @@ import '@aws-amplify/ui-react/styles.css';
 import { Amplify } from 'aws-amplify';
 import awsExports from './aws-exports';
 import Dashboard from './components/Dashboard';
+import ChatWidget from './components/ChatWidget';
 
 Amplify.configure(awsExports);
 
@@ -10,7 +11,7 @@ function App() {
   return (
     <Authenticator>
       {({ signOut, user }) => (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans relative pb-20 sm:pb-0">
           {/* Header */}
           <header className="bg-white shadow z-10 relative">
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -36,6 +37,9 @@ function App() {
 
           {/* Render the Dashboard component */}
           <Dashboard />
+
+          {/* Render the Floating Chatbot Widget securely within the Auth Context */}
+          <ChatWidget />
         </div>
       )}
     </Authenticator>

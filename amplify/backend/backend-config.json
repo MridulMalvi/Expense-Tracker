@@ -35,8 +35,51 @@
     },
     "processReceipt": {
       "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "data"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_S3Triggerbebbab94_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Triggerbebbab94"
+        }
+      ]
+    },
+    "AMPLIFY_function_S3Triggerbebbab94_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "S3Triggerbebbab94"
+        }
+      ]
+    },
+    "AMPLIFY_function_processReceipt_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "processReceipt"
+        }
+      ]
+    },
+    "AMPLIFY_function_processReceipt_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "processReceipt"
+        }
+      ]
     }
   },
   "storage": {
