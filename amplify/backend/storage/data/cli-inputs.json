@@ -1,0 +1,13 @@
+{
+  "resourceName": "data",
+  "policyUUID": "dd7ac843",
+  "bucketName": "expensesimages",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ"
+  ],
+  "triggerFunction": "S3Triggerbebbab94",
+  "groupAccess": {}
+}

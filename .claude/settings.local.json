@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(mv expense-tracker-temp/* .)",
+      "Bash(mv expense-tracker-temp/.* .)",
+      "Bash(npm install *)",
+      "Bash(amplify init *)"
+    ]
+  }
+}
