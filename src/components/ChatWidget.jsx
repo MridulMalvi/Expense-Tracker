@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Sparkles } from 'lucide-react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { LexRuntimeV2Client, RecognizeTextCommand } from '@aws-sdk/client-lex-runtime-v2';
 import awsconfig from '../aws-exports'; // Import to dynamically grab project region
@@ -84,37 +84,44 @@ export default function ChatWidget() {
       
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto bg-white border border-gray-100 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden mb-5 transition-all duration-300 ease-in-out transform origin-bottom-right">
+        <div className="pointer-events-auto bg-white border border-gray-200/60 shadow-2xl rounded-3xl w-80 sm:w-96 flex flex-col overflow-hidden mb-4 animate-fade-in-up">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 flex justify-between to-purple-600 p-4 text-white items-center shadow-sm z-10">
-            <div className="flex items-center gap-2.5">
-              <Bot size={24} className="text-indigo-100 bg-white/20 p-1 rounded-full w-8 h-8 flex justify-center items-center" />
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 flex justify-between items-center shadow-sm relative overflow-hidden">
+            {/* Subtle pattern */}
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,white_1px,transparent_1px)] bg-[length:16px_16px]" />
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Bot size={22} className="text-white" />
+              </div>
               <div>
-                <h3 className="font-semibold text-lg leading-tight tracking-wide">Expense Bot</h3>
-                <p className="text-indigo-100 text-xs">Powered by Amazon Lex</p>
+                <h3 className="font-bold text-white text-sm tracking-wide">Expense Bot</h3>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <p className="text-indigo-100 text-[11px] font-medium">Powered by Amazon Lex</p>
+                </div>
               </div>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="text-indigo-100 opacity-80 hover:opacity-100 hover:bg-white/20 p-1.5 rounded-lg transition-all"
+              className="relative z-10 text-white/70 hover:text-white hover:bg-white/15 p-2 rounded-xl transition-all"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 p-5 overflow-y-auto bg-gray-50/50 flex flex-col gap-4 min-h-[300px] max-h-[400px]">
+          <div className="flex-1 px-4 py-5 overflow-y-auto bg-gray-50/40 flex flex-col gap-3.5 min-h-[300px] max-h-[400px]">
             {messages.map((msg, idx) => (
               <div 
                 key={idx} 
                 className={`flex w-full ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`flex flex-col gap-1 max-w-[85%] ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm ${
+                  <div className={`px-4 py-2.5 text-sm leading-relaxed ${
                     msg.type === 'user' 
-                      ? 'bg-indigo-600 text-white rounded-br-none' 
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
+                      ? 'bg-indigo-600 text-white rounded-2xl rounded-br-md shadow-sm shadow-indigo-500/10' 
+                      : 'bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-bl-md shadow-sm'
                   }`}>
                     {msg.text}
                   </div>
@@ -125,7 +132,7 @@ export default function ChatWidget() {
             {/* Typing Indicator */}
             {isTyping && (
               <div className="flex w-full justify-start">
-                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 flex gap-1.5 items-center">
+                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100 flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
@@ -138,21 +145,24 @@ export default function ChatWidget() {
           {/* Input Area */}
           <form 
             onSubmit={handleSend}
-            className="border-t border-gray-100 bg-white p-3 flex gap-2 items-center"
+            className="border-t border-gray-100 bg-white p-3 flex gap-2.5 items-center"
           >
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask a question..."
-              className="flex-1 bg-gray-100 border-none rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-800"
+              className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white transition-all text-gray-800 placeholder:text-gray-400"
             />
             <button 
               type="submit"
               disabled={!inputText.trim()}
-              className="bg-indigo-600 text-white h-11 w-11 rounded-full flex justify-center items-center hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
+              className="bg-indigo-600 text-white h-11 w-11 rounded-xl flex justify-center items-center
+                         hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-all shadow-sm shadow-indigo-500/20
+                         active:scale-[0.93] flex-shrink-0"
             >
-              <Send size={18} className="translate-x-[1px]" />
+              <Send size={17} className="translate-x-[1px]" />
             </button>
           </form>
         </div>
@@ -160,15 +170,19 @@ export default function ChatWidget() {
 
       {/* Floating Toggle Button */}
       <button
+        id="chat-toggle-button"
         onClick={() => setIsOpen(!isOpen)}
-        className="pointer-events-auto bg-gradient-to-tr from-indigo-600 to-purple-600 p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center relative group"
+        className="pointer-events-auto bg-gradient-to-tr from-indigo-600 to-purple-600 p-4 rounded-2xl shadow-lg shadow-indigo-500/25
+                   hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105
+                   transition-all duration-300 flex items-center justify-center relative group
+                   active:scale-95"
       >
-        {isOpen ? <X size={28} className="text-white" /> : <MessageSquare size={28} className="text-white" />}
+        {isOpen ? <X size={26} className="text-white" /> : <MessageSquare size={26} className="text-white" />}
         {!isOpen && (
-           <span className="absolute -top-1 -right-1 flex h-4 w-4">
-             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-             <span className="relative inline-flex rounded-full h-4 w-4 bg-pink-500 border-2 border-white"></span>
-           </span>
+          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-pink-500 border-2 border-white"></span>
+          </span>
         )}
       </button>
 

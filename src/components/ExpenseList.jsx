@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { generateClient } from 'aws-amplify/api';
-import { RefreshCw, AlertCircle, CheckCircle, X, Inbox } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle, X, Inbox, ListFilter } from 'lucide-react';
 
 const client = generateClient();
 
@@ -26,7 +26,7 @@ function Toast({ toasts, onDismiss }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto flex items-start gap-3 px-4 py-3.5 rounded-xl shadow-lg border text-sm font-medium backdrop-blur-sm w-full ${
+          className={`pointer-events-auto flex items-start gap-3 px-4 py-3.5 rounded-xl shadow-lg border text-sm font-medium backdrop-blur-sm animate-fade-in-up w-full ${
             t.type === 'success'
               ? 'bg-green-50 border-green-200 text-green-800'
               : 'bg-red-50 border-red-200 text-red-800'
@@ -55,15 +55,15 @@ function Toast({ toasts, onDismiss }) {
 // ─────────────────────────────────────────────
 function SkeletonRow() {
   return (
-    <tr className="border-b border-gray-100">
+    <tr className="border-b border-gray-50">
       <td className="px-6 py-4">
-        <div className="h-4 w-24 bg-gray-200 rounded-full animate-pulse" />
+        <div className="h-4 w-24 bg-gray-100 rounded-lg animate-pulse" />
       </td>
       <td className="px-6 py-4">
-        <div className="h-4 w-40 bg-gray-200 rounded-full animate-pulse" />
+        <div className="h-4 w-40 bg-gray-100 rounded-lg animate-pulse" />
       </td>
       <td className="px-6 py-4 flex justify-end">
-        <div className="h-4 w-16 bg-gray-200 rounded-full animate-pulse" />
+        <div className="h-4 w-16 bg-gray-100 rounded-lg animate-pulse" />
       </td>
     </tr>
   );
@@ -143,19 +143,30 @@ export default function ExpenseList() {
     <>
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Card Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">Recent Expenses</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              {loading ? 'Fetching your receipts…' : `${expenses.length} receipts found`}
-            </p>
+        <div className="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <ListFilter size={18} className="text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Recent Expenses</h3>
+              <p className="text-xs text-gray-400 mt-0.5 font-medium">
+                {loading ? 'Fetching your receipts…' : `${expenses.length} receipts found`}
+              </p>
+            </div>
           </div>
 
           <button
+            id="refresh-expenses-button"
             onClick={() => fetchExpenses({ isManualRefresh: true })}
             disabled={loading || isRefreshing}
             title="Refresh expenses"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+                       border border-gray-200 text-gray-600
+                       hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50
+                       transition-all duration-150
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       active:scale-[0.97] self-start sm:self-center"
           >
             <RefreshCw
               size={15}
@@ -165,48 +176,68 @@ export default function ExpenseList() {
           </button>
         </div>
 
-        {/* Table / States */}
+        {/* Table */}
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left text-sm whitespace-nowrap table-auto">
-            <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200 text-xs uppercase tracking-wider">
-              <tr>
-                <th scope="col" className="px-6 py-3.5">Date</th>
-                <th scope="col" className="px-6 py-3.5">Merchant</th>
-                <th scope="col" className="px-6 py-3.5 text-right">Amount</th>
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                <th scope="col" className="px-6 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Date
+                </th>
+                <th scope="col" className="px-6 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Merchant
+                </th>
+                <th scope="col" className="px-6 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-right">
+                  Amount
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {loading ? (
                 // Skeleton rows during initial load
                 Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
               ) : expenses.length === 0 ? (
                 <tr>
                   <td colSpan={3}>
-                    <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                      <Inbox size={40} className="mb-3 opacity-50" />
-                      <p className="font-medium text-gray-500">No expenses yet</p>
-                      <p className="text-xs mt-1">Upload a receipt to get started</p>
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                      <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                        <Inbox size={28} className="opacity-50" />
+                      </div>
+                      <p className="font-semibold text-gray-500 text-sm">No expenses yet</p>
+                      <p className="text-xs mt-1 text-gray-400">Upload a receipt to get started</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                expenses.map((expense) => (
+                expenses.map((expense, idx) => (
                   <tr
                     key={expense.id}
-                    className={`transition-colors ${
-                      isRefreshing ? 'opacity-50' : 'hover:bg-gray-50'
+                    className={`transition-all duration-150 ${
+                      isRefreshing ? 'opacity-40' : 'hover:bg-gray-50/80'
                     }`}
+                    style={{ animationDelay: `${idx * 50}ms` }}
                   >
-                    <td className="px-6 py-4 text-gray-500">
+                    <td className="px-6 py-4 text-gray-500 font-medium">
                       {new Date(expense.date).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })}
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900">{expense.merchant}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-gray-900">
-                      ${Number(expense.amount).toFixed(2)}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100/50 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-indigo-600">
+                            {expense.merchant?.charAt(0)?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <span className="font-semibold text-gray-900">{expense.merchant}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-lg text-sm">
+                        ${Number(expense.amount).toFixed(2)}
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -217,9 +248,11 @@ export default function ExpenseList() {
 
         {/* Footer total row */}
         {!loading && expenses.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-            <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Total</span>
-            <span className="text-sm font-bold text-indigo-700">${totalAmount.toFixed(2)}</span>
+          <div className="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+            <span className="text-[11px] text-gray-400 uppercase tracking-wider font-bold">Total</span>
+            <span className="text-sm font-extrabold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg">
+              ${totalAmount.toFixed(2)}
+            </span>
           </div>
         )}
       </div>

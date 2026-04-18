@@ -238,10 +238,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## 🙏 Acknowledgements
-
-- [AWS Amplify](https://aws.amazon.com/amplify/) — Backend-as-a-Service
-- [Amazon Textract](https://aws.amazon.com/textract/) — Intelligent document processing
-- [Amazon Lex](https://aws.amazon.com/lex/) — Conversational AI
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS framework
-- [Lucide Icons](https://lucide.dev/) — Beautiful open-source icons

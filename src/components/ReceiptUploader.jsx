@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { UploadCloud, File, CheckCircle, AlertCircle, X, Loader2 } from 'lucide-react';
+import { UploadCloud, File, CheckCircle, AlertCircle, X, Loader2, ImagePlus } from 'lucide-react';
 import { uploadData } from 'aws-amplify/storage';
 
 // ─────────────────────────────────────────────
@@ -134,142 +134,165 @@ export default function ReceiptUploader() {
     uploadStatus === 'error'
       ? 'bg-red-500'
       : uploadStatus === 'success'
-      ? 'bg-green-500'
+      ? 'bg-emerald-500'
       : 'bg-indigo-600';
 
   return (
     <>
-      <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 relative">
+      <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Card Header */}
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Upload Receipt</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Accepted formats: .jpg or .png — files are processed automatically
-          </p>
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+            <ImagePlus size={18} className="text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Upload Receipt</h3>
+            <p className="text-xs text-gray-400 mt-0.5 font-medium">
+              Accepted formats: .jpg or .png — files are processed automatically
+            </p>
+          </div>
         </div>
 
         {/* Drop Zone */}
-        <div
-          className={`relative flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl transition-all duration-200 ease-in-out ${
-            isUploading
-              ? 'border-indigo-300 bg-indigo-50/30 cursor-not-allowed opacity-60'
-              : dragActive
-              ? 'border-indigo-500 bg-indigo-50/50'
-              : 'border-gray-200 hover:border-indigo-400 hover:bg-gray-50 cursor-pointer'
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            className="hidden"
-            accept=".jpg,.jpeg,.png"
-            onChange={handleChange}
-            disabled={isUploading}
-          />
-
+        <div className="p-6">
           <div
-            className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-colors duration-200 ${
+            id="drop-zone"
+            className={`relative flex flex-col items-center justify-center py-14 px-8 border-2 border-dashed rounded-2xl transition-all duration-200 ease-in-out ${
               isUploading
-                ? 'bg-indigo-100 text-indigo-400'
+                ? 'border-indigo-300 bg-indigo-50/40 cursor-not-allowed opacity-70'
                 : dragActive
-                ? 'bg-indigo-100 text-indigo-600'
-                : 'bg-gray-100 text-gray-400'
+                ? 'border-indigo-500 bg-indigo-50/60 shadow-inner scale-[1.01]'
+                : 'border-gray-200 hover:border-indigo-400 hover:bg-indigo-50/20 cursor-pointer'
             }`}
-          >
-            {isUploading ? (
-              <Loader2 size={32} className="animate-spin text-indigo-500" />
-            ) : (
-              <UploadCloud size={32} />
-            )}
-          </div>
-
-          <p className="text-gray-700 font-medium mb-2 text-lg">
-            {isUploading ? 'Uploading to S3…' : 'Drag and drop your file here'}
-          </p>
-          <p className="text-gray-400 text-sm mb-6">or</p>
-
-          <button
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
             onClick={() => !isUploading && inputRef.current.click()}
-            disabled={isUploading}
-            className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-gray-50 hover:enabled:text-indigo-600 hover:enabled:border-indigo-300 flex items-center gap-2"
           >
-            {isUploading && <Loader2 size={14} className="animate-spin" />}
-            {isUploading ? 'Processing…' : 'Browse files'}
-          </button>
+            <input
+              ref={inputRef}
+              type="file"
+              className="hidden"
+              accept=".jpg,.jpeg,.png"
+              onChange={handleChange}
+              disabled={isUploading}
+            />
+
+            {/* Icon Circle */}
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-200 ${
+                isUploading
+                  ? 'bg-indigo-100 text-indigo-400'
+                  : dragActive
+                  ? 'bg-indigo-100 text-indigo-600 scale-110'
+                  : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-50'
+              }`}
+            >
+              {isUploading ? (
+                <Loader2 size={28} className="animate-spin text-indigo-500" />
+              ) : (
+                <UploadCloud size={28} />
+              )}
+            </div>
+
+            <p className="text-gray-800 font-semibold text-base mb-1.5">
+              {isUploading ? 'Uploading to S3…' : 'Drag and drop your receipt here'}
+            </p>
+            <p className="text-gray-400 text-sm mb-5">or</p>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                !isUploading && inputRef.current.click();
+              }}
+              disabled={isUploading}
+              className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold
+                         shadow-sm shadow-indigo-500/20
+                         transition-all duration-200
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         hover:enabled:bg-indigo-700 hover:enabled:shadow-md
+                         active:enabled:scale-[0.97]
+                         flex items-center gap-2"
+            >
+              {isUploading && <Loader2 size={14} className="animate-spin" />}
+              {isUploading ? 'Processing…' : 'Browse Files'}
+            </button>
+
+            <p className="text-[11px] text-gray-400 mt-4">Maximum file size: 10 MB</p>
+          </div>
         </div>
 
         {/* File Progress Card */}
         {selectedFile && (
-          <div
-            className={`mt-6 p-4 rounded-xl border transition-colors ${
-              uploadStatus === 'error'
-                ? 'bg-red-50 border-red-100'
-                : uploadStatus === 'success'
-                ? 'bg-green-50 border-green-100'
-                : 'bg-gray-50 border-gray-100'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 overflow-hidden">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200 shrink-0 shadow-sm">
-                  {isUploading ? (
-                    <Loader2 className="text-indigo-400 animate-spin" size={22} />
-                  ) : uploadStatus === 'error' ? (
-                    <AlertCircle className="text-red-400" size={22} />
-                  ) : (
-                    <File className="text-indigo-500" size={22} />
-                  )}
-                </div>
-                <div className="overflow-hidden">
-                  <p className="text-sm font-medium text-gray-900 truncate max-w-[200px] sm:max-w-xs">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    {uploadStatus === 'error' && (
-                      <span className="text-red-500 ml-2 font-medium">— Upload failed</span>
+          <div className="px-6 pb-6">
+            <div
+              className={`p-4 rounded-xl border transition-colors ${
+                uploadStatus === 'error'
+                  ? 'bg-red-50 border-red-100'
+                  : uploadStatus === 'success'
+                  ? 'bg-emerald-50 border-emerald-100'
+                  : 'bg-gray-50 border-gray-100'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center border border-gray-200 shrink-0 shadow-sm">
+                    {isUploading ? (
+                      <Loader2 className="text-indigo-400 animate-spin" size={20} />
+                    ) : uploadStatus === 'error' ? (
+                      <AlertCircle className="text-red-400" size={20} />
+                    ) : (
+                      <File className="text-indigo-500" size={20} />
                     )}
-                  </p>
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-semibold text-gray-900 truncate max-w-[200px] sm:max-w-xs">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      {uploadStatus === 'error' && (
+                        <span className="text-red-500 ml-2 font-medium">— Upload failed</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
+                {uploadStatus === 'success' && (
+                  <CheckCircle className="text-emerald-500 shrink-0" size={20} />
+                )}
+                {uploadStatus === 'error' && (
+                  <AlertCircle className="text-red-400 shrink-0" size={20} />
+                )}
               </div>
-              {uploadStatus === 'success' && (
-                <CheckCircle className="text-green-500 shrink-0" size={22} />
-              )}
-              {uploadStatus === 'error' && (
-                <AlertCircle className="text-red-400 shrink-0" size={22} />
-              )}
-            </div>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-4">
-              <div
-                className={`h-1.5 rounded-full transition-all duration-300 ease-out ${progressBarColor}`}
-                style={{ width: `${uploadStatus === 'error' ? 100 : uploadProgress}%` }}
-              />
-            </div>
-            <div className="mt-2 flex justify-between items-center">
-              <span className="text-xs text-gray-400">
-                {uploadStatus === 'success'
-                  ? 'Successfully uploaded'
-                  : uploadStatus === 'error'
-                  ? 'Upload failed — please retry'
-                  : 'Uploading…'}
-              </span>
-              <span
-                className={`text-xs font-semibold ${
-                  uploadStatus === 'error'
-                    ? 'text-red-500'
-                    : uploadStatus === 'success'
-                    ? 'text-green-600'
-                    : 'text-indigo-600'
-                }`}
-              >
-                {uploadStatus === 'error' ? 'Error' : `${uploadProgress}%`}
-              </span>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200/60 rounded-full h-1.5 overflow-hidden mt-4">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-300 ease-out ${progressBarColor}`}
+                  style={{ width: `${uploadStatus === 'error' ? 100 : uploadProgress}%` }}
+                />
+              </div>
+              <div className="mt-2 flex justify-between items-center">
+                <span className="text-xs text-gray-400">
+                  {uploadStatus === 'success'
+                    ? 'Successfully uploaded'
+                    : uploadStatus === 'error'
+                    ? 'Upload failed — please retry'
+                    : 'Uploading…'}
+                </span>
+                <span
+                  className={`text-xs font-bold ${
+                    uploadStatus === 'error'
+                      ? 'text-red-500'
+                      : uploadStatus === 'success'
+                      ? 'text-emerald-600'
+                      : 'text-indigo-600'
+                  }`}
+                >
+                  {uploadStatus === 'error' ? 'Error' : `${uploadProgress}%`}
+                </span>
+              </div>
             </div>
           </div>
         )}
