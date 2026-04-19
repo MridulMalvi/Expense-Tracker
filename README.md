@@ -2,8 +2,6 @@
 
 A **100% serverless**, AI-powered expense management system that extracts receipt data automatically using OCR. Upload a photo of any receipt and let Amazon Textract parse the merchant, date, and total — no manual data entry required.
 
-Built to demonstrate a **zero-cost cloud architecture** using the AWS Free Tier.
-
 ![Architecture Diagram](docs/architecture.png)
 
 ---
