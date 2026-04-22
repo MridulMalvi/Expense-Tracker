@@ -48,15 +48,15 @@ export default function ReceiptUploader() {
   const inputRef = useRef(null);
 
   // ── Toast helpers ──────────────────────────
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => dismissToast(id), 5000);
-  }, []);
-
-  const dismissToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [dismissToast]);
 
   // ── Drag handlers ─────────────────────────
   const handleDrag = (e) => {

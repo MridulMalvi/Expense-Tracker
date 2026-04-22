@@ -76,20 +76,19 @@ export default function ExpenseList() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [fetchError, setFetchError] = useState(false);
   const [toasts, setToasts] = useState([]);
   const hasFetchedOnce = useRef(false);
 
   // ── Toast helpers ──────────────────────────
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => dismissToast(id), 5000);
-  }, []);
-
-  const dismissToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [dismissToast]);
 
   // ── Fetch logic ────────────────────────────
   const fetchExpenses = useCallback(async ({ isManualRefresh = false } = {}) => {
@@ -98,21 +97,17 @@ export default function ExpenseList() {
     } else {
       setLoading(true);
     }
-    setFetchError(false);
-
     try {
       const expenseData = await client.graphql({ query: listExpensesQuery });
       const items = expenseData.data.listExpenses.items || [];
       const sorted = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
       setExpenses(sorted);
-      setFetchError(false);
 
       if (isManualRefresh) {
         addToast('Expenses refreshed successfully.', 'success');
       }
     } catch (err) {
       console.error('Error fetching expenses from GraphQL:', err);
-      setFetchError(true);
 
       // Silently seed mock data only on the very first load so the UI is never blank
       if (!hasFetchedOnce.current) {
