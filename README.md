@@ -211,11 +211,6 @@ Both `ReceiptUploader` and `ExpenseList` provide real-time feedback via toast no
 
 The floating chat widget uses `@aws-sdk/client-lex-runtime-v2` directly (since `Amplify.Interactions` was removed in v6) and authenticates via `fetchAuthSession()` to obtain temporary Cognito credentials.
 
----
-
-## 📸 Screenshots
-
-> _Screenshots will be added after final UI deployment._
 
 ---
 
