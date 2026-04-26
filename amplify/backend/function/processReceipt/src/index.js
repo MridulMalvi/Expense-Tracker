@@ -1,15 +1,9 @@
-const awsServerlessExpress = require('aws-serverless-express');
-const app = require('./app');
+/* Amplify Params - DO NOT EDIT
+	ENV
+	REGION
+	STORAGE_DATA_BUCKETNAME
+Amplify Params - DO NOT EDIT */
 
-/**
- * @type {import('http').Server}
- */
-const server = awsServerlessExpress.createServer(app);
-
-/**
- * @type {import('@types/aws-lambda').APIGatewayProxyHandler}
- */
-exports.handler = (event, context) => {
-  console.log(`EVENT: ${JSON.stringify(event)}`);
-  return awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise;
-};
+// Re-export the handler directly from app.js
+// (app.js is now a standalone Lambda handler, not an Express app)
+exports.handler = require('./app').handler;
