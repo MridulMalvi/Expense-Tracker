@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 /* ─── Inter font from Google Fonts ─────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -127,3 +128,30 @@ body {
   --amplify-fonts-default-variable: 'Inter', sans-serif;
   min-height: 100svh;
 }
+
+/* ─── Dark Mode ────────────────────────────────────────── */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color-scheme: light;
+}
+
+html.dark body {
+  color-scheme: dark;
+  background-color: #030712; /* gray-950 */
+  color: #f9fafb;            /* gray-50  */
+}
+
+/* Smooth color transitions for common elements in dark mode */
+html.dark * {
+  border-color: inherit;
+}
+
+/* Tailwind dark: classes work via html.dark selector */
+@media (prefers-color-scheme: dark) {
+  html.dark-system body {
+    color-scheme: dark;
+    background-color: #030712;
+    color: #f9fafb;
+  }
+}
+
