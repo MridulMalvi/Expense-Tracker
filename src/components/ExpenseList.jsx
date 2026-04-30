@@ -7,6 +7,8 @@ import {
   listExpenses, createExpense, updateExpense, deleteExpense,
   mockApi,
 } from '../api';
+import awsExports from '../aws-exports';
+import { useSettings } from '../context/SettingsContext';
 
 // ─── Try real Lambda, fall back to mock on error ──────────────
 const api = {
@@ -15,6 +17,10 @@ const api = {
   update: async (id, d) => { try { return await updateExpense(id, d); } catch { return mockApi.updateExpense(id, d); } },
   delete: async (id) => { try { return await deleteExpense(id); } catch { return mockApi.deleteExpense(id); } },
 };
+
+// ─── API config check ─────────────────────────────────────────
+const _isApiConfigured = !!(awsExports && awsExports.aws_user_pools_id);
+function isApiConfigured() { return _isApiConfigured; }
 
 // ─── Categories ───────────────────────────────────────────────
 const CATEGORY_STYLES = {
@@ -256,6 +262,7 @@ export default function ExpenseList() {
   };
 
   const totalAmount = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const { fmt } = useSettings();
 
   return (
     <>
@@ -367,8 +374,8 @@ export default function ExpenseList() {
                       <CategoryBadge category={expense.category} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-lg text-sm">
-                        ${Number(expense.amount).toFixed(2)}
+                      <span className="font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-1 rounded-lg text-sm">
+                        {fmt(expense.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -402,8 +409,8 @@ export default function ExpenseList() {
         {!loading && expenses.length > 0 && (
           <div className="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
             <span className="text-[11px] text-gray-400 uppercase tracking-wider font-bold">Total</span>
-            <span className="text-sm font-extrabold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg">
-              ${totalAmount.toFixed(2)}
+            <span className="text-sm font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-lg">
+              {fmt(totalAmount)}
             </span>
           </div>
         )}
