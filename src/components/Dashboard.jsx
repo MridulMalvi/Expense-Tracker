@@ -103,6 +103,7 @@ function ToggleRow({ label, description, settingKey }) {
 // ─── Views ───────────────────────────────────────────────────
 
 function OverviewView() {
+  const { fmt } = useSettings();
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 rounded-2xl p-7 sm:p-10 text-white shadow-xl shadow-indigo-500/15">
@@ -117,9 +118,9 @@ function OverviewView() {
         <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Receipt}    label="Total Receipts" value="12"      trend="+3"   color="indigo" />
-        <StatCard icon={TrendingUp} label="This Month"     value="$482.50" trend="+12%" color="emerald" />
-        <StatCard icon={BarChart2}  label="Avg. Expense"   value="$40.21"               color="amber" />
+        <StatCard icon={Receipt}    label="Total Receipts" value="12"              trend="+3"   color="indigo" />
+        <StatCard icon={TrendingUp} label="This Month"     value={fmt(482.50)}    trend="+12%" color="emerald" />
+        <StatCard icon={BarChart2}  label="Avg. Expense"   value={fmt(40.21)}                  color="amber" />
       </div>
       <div className="grid grid-cols-1 gap-8">
         <section><ReceiptUploader /></section>
