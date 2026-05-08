@@ -15,7 +15,9 @@
   "Conditions": {
     "ShouldNotCreateEnvResources": {
       "Fn::Equals": [
-        { "Ref": "env" },
+        {
+          "Ref": "env"
+        },
         "NONE"
       ]
     }
@@ -39,7 +41,9 @@
                 [
                   "S3Triggerbebbab94",
                   "-",
-                  { "Ref": "env" }
+                  {
+                    "Ref": "env"
+                  }
                 ]
               ]
             }
@@ -47,27 +51,46 @@
         },
         "Environment": {
           "Variables": {
-            "ENV": { "Ref": "env" },
-            "REGION": { "Ref": "AWS::Region" },
+            "ENV": {
+              "Ref": "env"
+            },
+            "REGION": {
+              "Ref": "AWS::Region"
+            },
             "EXPENSES_TABLE_NAME": {
               "Fn::If": [
                 "ShouldNotCreateEnvResources",
                 "Expenses",
                 {
-                  "Fn::Join": ["", ["Expenses-", { "Ref": "env" }]]
+                  "Fn::Join": [
+                    "",
+                    [
+                      "Expenses-",
+                      {
+                        "Ref": "env"
+                      }
+                    ]
+                  ]
                 }
               ]
             }
           }
         },
         "Role": {
-          "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
         },
         "Runtime": "nodejs22.x",
         "Timeout": 30,
         "Code": {
-          "S3Bucket": { "Ref": "deploymentBucketName" },
-          "S3Key": { "Ref": "s3Key" }
+          "S3Bucket": {
+            "Ref": "deploymentBucketName"
+          },
+          "S3Key": {
+            "Ref": "s3Key"
+          }
         }
       }
     },
@@ -84,7 +107,9 @@
                 [
                   "S3Triggerbebbab94LambdaRolebebbab94",
                   "-",
-                  { "Ref": "env" }
+                  {
+                    "Ref": "env"
+                  }
                 ]
               ]
             }
@@ -95,19 +120,31 @@
           "Statement": [
             {
               "Effect": "Allow",
-              "Principal": { "Service": ["lambda.amazonaws.com"] },
-              "Action": ["sts:AssumeRole"]
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
             }
           ]
         }
       }
     },
     "lambdaexecutionpolicy": {
-      "DependsOn": ["LambdaExecutionRole"],
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "lambda-execution-policy",
-        "Roles": [{ "Ref": "LambdaExecutionRole" }],
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -122,9 +159,15 @@
                 "Fn::Sub": [
                   "arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*",
                   {
-                    "region": { "Ref": "AWS::Region" },
-                    "account": { "Ref": "AWS::AccountId" },
-                    "lambda": { "Ref": "LambdaFunction" }
+                    "region": {
+                      "Ref": "AWS::Region"
+                    },
+                    "account": {
+                      "Ref": "AWS::AccountId"
+                    },
+                    "lambda": {
+                      "Ref": "LambdaFunction"
+                    }
                   }
                 ]
               }
@@ -152,9 +195,15 @@
                   "Fn::Sub": [
                     "arn:aws:dynamodb:${region}:${account}:table/Expenses-${env}",
                     {
-                      "region": { "Ref": "AWS::Region" },
-                      "account": { "Ref": "AWS::AccountId" },
-                      "env": { "Ref": "env" }
+                      "region": {
+                        "Ref": "AWS::Region"
+                      },
+                      "account": {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "env": {
+                        "Ref": "env"
+                      }
                     }
                   ]
                 },
@@ -162,8 +211,12 @@
                   "Fn::Sub": [
                     "arn:aws:dynamodb:${region}:${account}:table/Expenses",
                     {
-                      "region": { "Ref": "AWS::Region" },
-                      "account": { "Ref": "AWS::AccountId" }
+                      "region": {
+                        "Ref": "AWS::Region"
+                      },
+                      "account": {
+                        "Ref": "AWS::AccountId"
+                      }
                     }
                   ]
                 }
@@ -184,22 +237,34 @@
   },
   "Outputs": {
     "Name": {
-      "Value": { "Ref": "LambdaFunction" }
+      "Value": {
+        "Ref": "LambdaFunction"
+      }
     },
     "Arn": {
       "Value": {
-        "Fn::GetAtt": ["LambdaFunction", "Arn"]
+        "Fn::GetAtt": [
+          "LambdaFunction",
+          "Arn"
+        ]
       }
     },
     "Region": {
-      "Value": { "Ref": "AWS::Region" }
+      "Value": {
+        "Ref": "AWS::Region"
+      }
     },
     "LambdaExecutionRole": {
-      "Value": { "Ref": "LambdaExecutionRole" }
+      "Value": {
+        "Ref": "LambdaExecutionRole"
+      }
     },
     "LambdaExecutionRoleArn": {
       "Value": {
-        "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]
+        "Fn::GetAtt": [
+          "LambdaExecutionRole",
+          "Arn"
+        ]
       }
     }
   }

@@ -24,7 +24,9 @@
   "Conditions": {
     "ShouldNotCreateEnvResources": {
       "Fn::Equals": [
-        { "Ref": "env" },
+        {
+          "Ref": "env"
+        },
         "NONE"
       ]
     }
@@ -37,29 +39,51 @@
           "Fn::If": [
             "ShouldNotCreateEnvResources",
             "Expenses",
-            { "Fn::Join": ["", ["Expenses-", { "Ref": "env" }]] }
+            {
+              "Fn::Join": [
+                "",
+                [
+                  "Expenses-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
+              ]
+            }
           ]
         },
         "BillingMode": "PAY_PER_REQUEST",
         "AttributeDefinitions": [
-          { "AttributeName": "id", "AttributeType": "S" }
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
         ],
         "KeySchema": [
-          { "AttributeName": "id", "KeyType": "HASH" }
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
         ]
       }
     },
     "LambdaFunction": {
       "Type": "AWS::Lambda::Function",
-      "DependsOn": ["ExpensesTable"],
+      "DependsOn": [
+        "ExpensesTable"
+      ],
       "Metadata": {
         "aws:asset:path": "./src",
         "aws:asset:property": "Code"
       },
       "Properties": {
         "Code": {
-          "S3Bucket": { "Ref": "deploymentBucketName" },
-          "S3Key": { "Ref": "s3Key" }
+          "S3Bucket": {
+            "Ref": "deploymentBucketName"
+          },
+          "S3Key": {
+            "Ref": "s3Key"
+          }
         },
         "Handler": "index.handler",
         "FunctionName": {
@@ -67,26 +91,54 @@
             "ShouldNotCreateEnvResources",
             "processReceipt",
             {
-              "Fn::Join": ["", ["processReceipt", "-", { "Ref": "env" }]]
+              "Fn::Join": [
+                "",
+                [
+                  "processReceipt",
+                  "-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
+              ]
             }
           ]
         },
         "Environment": {
           "Variables": {
-            "ENV": { "Ref": "env" },
-            "REGION": { "Ref": "AWS::Region" },
-            "STORAGE_DATA_BUCKETNAME": { "Ref": "storagedataBucketName" },
+            "ENV": {
+              "Ref": "env"
+            },
+            "REGION": {
+              "Ref": "AWS::Region"
+            },
+            "STORAGE_DATA_BUCKETNAME": {
+              "Ref": "storagedataBucketName"
+            },
             "EXPENSES_TABLE_NAME": {
               "Fn::If": [
                 "ShouldNotCreateEnvResources",
                 "Expenses",
-                { "Fn::Join": ["", ["Expenses-", { "Ref": "env" }]] }
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "Expenses-",
+                      {
+                        "Ref": "env"
+                      }
+                    ]
+                  ]
+                }
               ]
             }
           }
         },
         "Role": {
-          "Fn::GetAtt": ["LambdaExecutionRole", "Arn"]
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
         },
         "Runtime": "nodejs22.x",
         "Layers": [],
@@ -95,23 +147,46 @@
     },
     "LambdaFunctionUrl": {
       "Type": "AWS::Lambda::Url",
-      "DependsOn": ["LambdaFunction"],
+      "DependsOn": [
+        "LambdaFunction"
+      ],
       "Properties": {
         "AuthType": "NONE",
         "Cors": {
           "AllowCredentials": false,
-          "AllowHeaders": ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"],
-          "AllowMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-          "AllowOrigins": ["*"],
+          "AllowHeaders": [
+            "Content-Type",
+            "Authorization",
+            "X-Amz-Date",
+            "X-Api-Key",
+            "X-Amz-Security-Token"
+          ],
+          "AllowMethods": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS"
+          ],
+          "AllowOrigins": [
+            "*"
+          ],
           "MaxAge": 300
         },
-        "TargetFunctionArn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] }
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "LambdaFunction",
+            "Arn"
+          ]
+        }
       }
     },
     "LambdaFunctionUrlPublicPermission": {
       "Type": "AWS::Lambda::Permission",
       "Properties": {
-        "FunctionName": { "Ref": "LambdaFunction" },
+        "FunctionName": {
+          "Ref": "LambdaFunction"
+        },
         "Principal": "*",
         "Action": "lambda:InvokeFunctionUrl",
         "FunctionUrlAuthType": "NONE"
@@ -127,7 +202,13 @@
             {
               "Fn::Join": [
                 "",
-                ["expensetracker22LambdaRole0230facb", "-", { "Ref": "env" }]
+                [
+                  "expensetracker22LambdaRole0230facb",
+                  "-",
+                  {
+                    "Ref": "env"
+                  }
+                ]
               ]
             }
           ]
@@ -137,19 +218,31 @@
           "Statement": [
             {
               "Effect": "Allow",
-              "Principal": { "Service": ["lambda.amazonaws.com"] },
-              "Action": ["sts:AssumeRole"]
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
             }
           ]
         }
       }
     },
     "lambdaexecutionpolicy": {
-      "DependsOn": ["LambdaExecutionRole"],
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "lambda-execution-policy",
-        "Roles": [{ "Ref": "LambdaExecutionRole" }],
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -164,9 +257,15 @@
                 "Fn::Sub": [
                   "arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*",
                   {
-                    "region": { "Ref": "AWS::Region" },
-                    "account": { "Ref": "AWS::AccountId" },
-                    "lambda": { "Ref": "LambdaFunction" }
+                    "region": {
+                      "Ref": "AWS::Region"
+                    },
+                    "account": {
+                      "Ref": "AWS::AccountId"
+                    },
+                    "lambda": {
+                      "Ref": "LambdaFunction"
+                    }
                   }
                 ]
               }
@@ -182,12 +281,25 @@
                 "dynamodb:Query"
               ],
               "Resource": [
-                { "Fn::GetAtt": ["ExpensesTable", "Arn"] },
                 {
-                  "Fn::Join": ["", [
-                    { "Fn::GetAtt": ["ExpensesTable", "Arn"] },
-                    "/index/*"
-                  ]]
+                  "Fn::GetAtt": [
+                    "ExpensesTable",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ExpensesTable",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             }
@@ -196,11 +308,17 @@
       }
     },
     "AmplifyResourcesPolicy": {
-      "DependsOn": ["LambdaExecutionRole"],
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "amplify-lambda-execution-policy",
-        "Roles": [{ "Ref": "LambdaExecutionRole" }],
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -209,16 +327,36 @@
               "Action": "s3:ListBucket",
               "Resource": [
                 {
-                  "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "storagedataBucketName" }]]
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "storagedataBucketName"
+                      }
+                    ]
+                  ]
                 }
               ]
             },
             {
               "Effect": "Allow",
-              "Action": ["s3:PutObject", "s3:GetObject"],
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject"
+              ],
               "Resource": [
                 {
-                  "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "storagedataBucketName" }, "/*"]]
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "storagedataBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
                 }
               ]
             }
@@ -229,28 +367,56 @@
   },
   "Outputs": {
     "Name": {
-      "Value": { "Ref": "LambdaFunction" }
+      "Value": {
+        "Ref": "LambdaFunction"
+      }
     },
     "Arn": {
-      "Value": { "Fn::GetAtt": ["LambdaFunction", "Arn"] }
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunction",
+          "Arn"
+        ]
+      }
     },
     "Region": {
-      "Value": { "Ref": "AWS::Region" }
+      "Value": {
+        "Ref": "AWS::Region"
+      }
     },
     "LambdaExecutionRole": {
-      "Value": { "Ref": "LambdaExecutionRole" }
+      "Value": {
+        "Ref": "LambdaExecutionRole"
+      }
     },
     "LambdaExecutionRoleArn": {
-      "Value": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] }
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaExecutionRole",
+          "Arn"
+        ]
+      }
     },
     "FunctionUrl": {
-      "Value": { "Fn::GetAtt": ["LambdaFunctionUrl", "FunctionUrl"] }
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunctionUrl",
+          "FunctionUrl"
+        ]
+      }
     },
     "ExpensesTableName": {
-      "Value": { "Ref": "ExpensesTable" }
+      "Value": {
+        "Ref": "ExpensesTable"
+      }
     },
     "ExpensesTableArn": {
-      "Value": { "Fn::GetAtt": ["ExpensesTable", "Arn"] }
+      "Value": {
+        "Fn::GetAtt": [
+          "ExpensesTable",
+          "Arn"
+        ]
+      }
     }
   }
 }

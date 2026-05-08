@@ -20,6 +20,9 @@ export type AmplifyDependentResourcesAttributes = {
     },
     "processReceipt": {
       "Arn": "string",
+      "ExpensesTableArn": "string",
+      "ExpensesTableName": "string",
+      "FunctionUrl": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
       "Name": "string",
