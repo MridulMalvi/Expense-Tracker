@@ -358,7 +358,11 @@ export default function ExpenseList() {
                     style={{ animationDelay: `${idx * 40}ms` }}
                   >
                     <td className="px-6 py-4 text-gray-500 font-medium">
-                      {new Date(expense.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {(() => {
+                        if (!expense.date) return '—';
+                        const [y, m, d] = expense.date.split('-').map(Number);
+                        return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2.5">
@@ -374,9 +378,15 @@ export default function ExpenseList() {
                       <CategoryBadge category={expense.category} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-1 rounded-lg text-sm">
-                        {fmt(expense.amount)}
-                      </span>
+                      {(!expense.amount || Number(expense.amount) === 0) ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          ⚠ Undetected — Edit to fix
+                        </span>
+                      ) : (
+                        <span className="font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-1 rounded-lg text-sm">
+                          {fmt(expense.amount)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

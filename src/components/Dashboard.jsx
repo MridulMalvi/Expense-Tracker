@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReceiptUploader from './ReceiptUploader';
 import ExpenseList from './ExpenseList';
 import { useSettings, CURRENCIES, exportExpensesCSV } from '../context/SettingsContext';
+import { listExpenses, mockApi } from '../api';
 import {
   LayoutDashboard, FileText, Settings, BarChart2, TrendingUp, Receipt,
   Zap, ArrowUpRight, ImagePlus, PieChart, Bell, Shield, Palette,
   CreditCard, Download, CheckCircle2, Info, ChevronRight, Sun, Moon, Monitor,
 } from 'lucide-react';
+
+// ─── Shared expense fetcher ───────────────────────────────────
+async function fetchAllExpenses() {
+  try {
+    const r = await listExpenses();
+    return r.items || [];
+  } catch {
+    const r = await mockApi.listExpenses();
+    return r.items || [];
+  }
+}
+
+// ─── UTC-safe date formatter ──────────────────────────────────
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (!y || !m || !d) return dateStr;
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
+}
 
 // ─── Stat Card ───────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, trend, color }) {
@@ -104,6 +126,21 @@ function ToggleRow({ label, description, settingKey }) {
 
 function OverviewView() {
   const { fmt } = useSettings();
+  const [expenses, setExpenses] = useState([]);
+
+  useEffect(() => {
+    fetchAllExpenses().then(setExpenses);
+  }, []);
+
+  const now = new Date();
+  const thisMonth = expenses.filter(e => {
+    if (!e.date) return false;
+    const [y, m] = e.date.split('-').map(Number);
+    return y === now.getFullYear() && m === (now.getMonth() + 1);
+  });
+  const monthTotal = thisMonth.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const avgExp = expenses.length ? expenses.reduce((s, e) => s + Number(e.amount || 0), 0) / expenses.length : 0;
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 rounded-2xl p-7 sm:p-10 text-white shadow-xl shadow-indigo-500/15">
@@ -118,9 +155,9 @@ function OverviewView() {
         <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Receipt}    label="Total Receipts" value="12"              trend="+3"   color="indigo" />
-        <StatCard icon={TrendingUp} label="This Month"     value={fmt(482.50)}    trend="+12%" color="emerald" />
-        <StatCard icon={BarChart2}  label="Avg. Expense"   value={fmt(40.21)}                  color="amber" />
+        <StatCard icon={Receipt}    label="Total Receipts" value={String(expenses.length)} color="indigo" />
+        <StatCard icon={TrendingUp} label="This Month"     value={fmt(monthTotal)}          color="emerald" />
+        <StatCard icon={BarChart2}  label="Avg. Expense"   value={fmt(avgExp)}               color="amber" />
       </div>
       <div className="grid grid-cols-1 gap-8">
         <section><ReceiptUploader /></section>
@@ -129,6 +166,7 @@ function OverviewView() {
     </div>
   );
 }
+
 
 function ReceiptsView() {
   return (
@@ -155,25 +193,41 @@ function ReceiptsView() {
 }
 
 function AnalyticsView() {
-  const categories = [
-    { label: 'Food & Dining',     amount: 142.75, color: 'amber'   },
-    { label: 'Travel',            amount: 98.00,  color: 'sky'     },
-    { label: 'Shopping',          amount: 214.50, color: 'purple'  },
-    { label: 'Health',            amount: 55.00,  color: 'rose'    },
-    { label: 'Bills & Utilities', amount: 185.20, color: 'indigo'  },
-    { label: 'Other',             amount: 36.30,  color: 'emerald' },
-  ];
-  const maxVal = Math.max(...categories.map(c => c.amount));
-  const total  = categories.reduce((s, c) => s + c.amount, 0);
   const { fmt } = useSettings();
+  const [expenses, setExpenses] = useState([]);
+  useEffect(() => { fetchAllExpenses().then(setExpenses); }, []);
 
-  const months = [
-    { m: 'Jan', v: 310 }, { m: 'Feb', v: 280 }, { m: 'Mar', v: 420 },
-    { m: 'Apr', v: 390 }, { m: 'May', v: 511 }, { m: 'Jun', v: 448 },
-    { m: 'Jul', v: 365 }, { m: 'Aug', v: 490 }, { m: 'Sep', v: 530 },
-    { m: 'Oct', v: 475 }, { m: 'Nov', v: 610 }, { m: 'Dec', v: 580 },
-  ];
-  const maxBar = Math.max(...months.map(m => m.v));
+  const CATEGORY_COLORS = {
+    Food: 'amber', Travel: 'sky', Shopping: 'purple',
+    Health: 'rose', Bills: 'indigo', Other: 'emerald',
+  };
+
+  // Category breakdown from real data
+  const catTotals = expenses.reduce((acc, e) => {
+    const cat = e.category || 'Other';
+    acc[cat] = (acc[cat] || 0) + Number(e.amount || 0);
+    return acc;
+  }, {});
+  const categories = Object.entries(catTotals)
+    .map(([label, amount]) => ({ label, amount, color: CATEGORY_COLORS[label] || 'emerald' }))
+    .sort((a, b) => b.amount - a.amount);
+  const maxVal = categories.length ? categories[0].amount : 1;
+  const total  = categories.reduce((s, c) => s + c.amount, 0);
+  const topCat = categories[0]?.label ?? '—';
+
+  // Monthly totals for current year
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const currentYear = new Date().getFullYear();
+  const currentMonthIdx = new Date().getMonth();
+  const monthlyTotals = Array(12).fill(0);
+  expenses.forEach(e => {
+    if (!e.date) return;
+    const [y, m] = e.date.split('-').map(Number);
+    if (y === currentYear) monthlyTotals[m - 1] += Number(e.amount || 0);
+  });
+  const maxBar = Math.max(...monthlyTotals, 1);
+  const peakMonthIdx = monthlyTotals.indexOf(Math.max(...monthlyTotals));
+  const peakMonth = monthlyTotals[peakMonthIdx] > 0 ? MONTH_NAMES[peakMonthIdx] : '—';
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -187,33 +241,42 @@ function AnalyticsView() {
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Receipt}    label="Total Spent"      value={fmt(total)} color="indigo" />
-        <StatCard icon={TrendingUp} label="Highest Category" value="Shopping"   color="purple" />
-        <StatCard icon={BarChart2}  label="Peak Month"       value="December"   color="emerald" />
+        <StatCard icon={Receipt}    label="Total Spent"      value={fmt(total)}  color="indigo" />
+        <StatCard icon={TrendingUp} label="Highest Category" value={topCat}      color="purple" />
+        <StatCard icon={BarChart2}  label="Peak Month"       value={peakMonth}   color="emerald" />
       </div>
+
+      {/* Category bars */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
         <h3 className="text-base font-bold text-gray-900 dark:text-white mb-5">Spending by Category</h3>
-        <div className="space-y-4">
-          {categories.map(c => (
-            <AnalyticsBar key={c.label} label={c.label} amount={c.amount} max={maxVal} color={c.color} />
-          ))}
-        </div>
+        {categories.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No expense data yet. Upload a receipt to get started.</p>
+        ) : (
+          <div className="space-y-4">
+            {categories.map(c => (
+              <AnalyticsBar key={c.label} label={c.label} amount={c.amount} max={maxVal} color={c.color} />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Monthly bar chart */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-5">Monthly Spending — 2026</h3>
+        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-5">Monthly Spending — {currentYear}</h3>
         <div className="flex items-end gap-2 h-40">
-          {months.map(({ m, v }) => {
+          {MONTH_NAMES.map((m, idx) => {
+            const v = monthlyTotals[idx];
             const pct = (v / maxBar) * 100;
-            const isThisMonth = m === 'Apr';
+            const isThisMonth = idx === currentMonthIdx;
             return (
               <div key={m} className="flex-1 flex flex-col items-center gap-1.5 group">
                 <span className="text-[10px] font-bold text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {fmt(v)}
+                  {v > 0 ? fmt(v) : ''}
                 </span>
                 <div
                   title={`${m}: ${fmt(v)}`}
                   className={`w-full rounded-t-lg transition-all duration-300 ${isThisMonth ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-600 group-hover:bg-indigo-300'}`}
-                  style={{ height: `${pct}%` }}
+                  style={{ height: `${Math.max(pct, v > 0 ? 4 : 0)}%` }}
                 />
                 <span className={`text-[10px] font-semibold ${isThisMonth ? 'text-indigo-600' : 'text-gray-400'}`}>{m}</span>
               </div>
@@ -225,6 +288,7 @@ function AnalyticsView() {
     </div>
   );
 }
+
 
 // ─── Settings View ────────────────────────────────────────────
 function SettingsView() {
