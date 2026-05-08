@@ -145,23 +145,85 @@ exports.handler = async function (event) {
 
     if (response.ExpenseDocuments && response.ExpenseDocuments.length > 0) {
       const doc = response.ExpenseDocuments[0];
-      const fields = doc.SummaryFields;
+      const fields = doc.SummaryFields || [];
 
-      // Extract with safe fallbacks — Lambda never crashes on missing data
-      extractedData.totalAmount  = extractField(fields, 'TOTAL',                 'Unknown');
-      extractedData.merchantName = extractField(fields, 'VENDOR_NAME',           'Unknown');
-      extractedData.date         = extractField(fields, 'INVOICE_RECEIPT_DATE',  extractedData.date);
+      // ── Log ALL detected summary fields for CloudWatch debugging ──
+      console.log('[processReceipt] All SummaryFields detected by Textract:');
+      fields.forEach(f => {
+        console.log(`  TYPE="${f.Type?.Text}"  VALUE="${f.ValueDetection?.Text}"  CONF=${f.ValueDetection?.Confidence?.toFixed(1)}`);
+      });
 
-      // Log any fields that fell back so we can monitor quality in CloudWatch
+      // ── Amount: try multiple field types in priority order ────────
+      // Textract uses different labels depending on receipt type/locale.
+      const AMOUNT_FIELD_PRIORITY = [
+        'TOTAL',          // Most common
+        'SUBTOTAL',       // Pre-tax total (use if TOTAL missing)
+        'AMOUNT_DUE',     // Invoices
+        'AMOUNT_PAID',    // Payment receipts
+        'NET_AMOUNT',     // Net billing
+        'GRAND_TOTAL',    // Some POS receipts
+        'BALANCE_DUE',    // Partial-pay invoices
+      ];
+
+      for (const fieldType of AMOUNT_FIELD_PRIORITY) {
+        const val = extractField(fields, fieldType, null);
+        if (val) {
+          console.log(`[processReceipt] Amount found via field type "${fieldType}": "${val}"`);
+          extractedData.totalAmount = val;
+          break;
+        }
+      }
+
+      // ── Amount: last resort — scan line items, take the largest ──
       if (extractedData.totalAmount === 'Unknown') {
-        console.error('[processReceipt] WARNING — Textract could not detect a TOTAL field on this receipt.');
+        console.warn('[processReceipt] No amount in SummaryFields — scanning LineItems…');
+        let maxAmount = 0;
+        const lineItemGroups = doc.LineItemGroups || [];
+        for (const group of lineItemGroups) {
+          for (const lineItem of (group.LineItems || [])) {
+            for (const expense of (lineItem.LineItemExpenseFields || [])) {
+              if (expense.Type?.Text === 'PRICE' || expense.Type?.Text === 'AMOUNT') {
+                const parsed = parseAmount(expense.ValueDetection?.Text);
+                if (parsed && parsed > maxAmount) maxAmount = parsed;
+              }
+            }
+          }
+        }
+        if (maxAmount > 0) {
+          extractedData.totalAmount = String(maxAmount);
+          console.log(`[processReceipt] Amount derived from LineItems max PRICE: ${maxAmount}`);
+        } else {
+          console.error('[processReceipt] WARNING — Could not detect any amount on this receipt.');
+        }
       }
-      if (extractedData.merchantName === 'Unknown') {
-        console.error('[processReceipt] WARNING — Textract could not detect a VENDOR_NAME field on this receipt.');
+
+      // ── Merchant: try multiple field types ────────────────────────
+      const MERCHANT_FIELD_PRIORITY = [
+        'VENDOR_NAME',
+        'MERCHANT_NAME',
+        'RECEIVER_NAME',
+        'NAME',
+      ];
+      for (const fieldType of MERCHANT_FIELD_PRIORITY) {
+        const val = extractField(fields, fieldType, null);
+        if (val) {
+          console.log(`[processReceipt] Merchant found via field type "${fieldType}": "${val}"`);
+          extractedData.merchantName = val;
+          break;
+        }
       }
-      if (extractedData.date === new Date().toISOString().split('T')[0]) {
-        console.error('[processReceipt] WARNING — Textract could not detect a DATE field; using today as fallback.');
+
+      // ── Date: try INVOICE_RECEIPT_DATE then ORDER_DATE ────────────
+      const DATE_FIELD_PRIORITY = ['INVOICE_RECEIPT_DATE', 'ORDER_DATE', 'DUE_DATE'];
+      for (const fieldType of DATE_FIELD_PRIORITY) {
+        const val = extractField(fields, fieldType, null);
+        if (val) {
+          console.log(`[processReceipt] Date found via field type "${fieldType}": "${val}"`);
+          extractedData.date = val;
+          break;
+        }
       }
+
     } else {
       console.error('[processReceipt] WARNING — Textract returned zero ExpenseDocuments. The image may not be a recognisable receipt.');
     }
@@ -169,7 +231,7 @@ exports.handler = async function (event) {
     console.error('[processReceipt] ERROR — Textract AnalyzeExpense call failed:', textractError);
     console.error('[processReceipt] Proceeding with fallback values to avoid data loss.');
     // We intentionally do NOT throw — the record will still be saved to DynamoDB
-    // with "Unknown" fields so the user can manually correct it later.
+    // with fallback values so the user can manually correct it later.
   }
 
   // ── 3. Persist to DynamoDB ─────────────────────────────
