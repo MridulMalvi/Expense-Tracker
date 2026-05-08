@@ -13,10 +13,10 @@ const ddbClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 // Example: amplify-expensetracker22-dev-Expenses
 const EXPENSES_TABLE_NAME = process.env.EXPENSES_TABLE_NAME || 'Expenses';
 
-// ─────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
 // Helper: Extract a specific field from Textract SummaryFields
 // Returns the value string or the provided fallback.
-// ─────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────
 function extractField(summaryFields, fieldType, fallback) {
   if (!Array.isArray(summaryFields)) return fallback;
 
@@ -26,6 +26,80 @@ function extractField(summaryFields, fieldType, fallback) {
       if (value && value.trim().length > 0) return value.trim();
     }
   }
+  return fallback;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Helper: Parse an amount string from Textract into a float.
+// Strips leading/trailing currency symbols, spaces, and commas.
+// Returns null if the result is not a valid positive number.
+// ───────────────────────────────────────────────────────────────
+function parseAmount(raw) {
+  if (!raw || raw === 'Unknown') return null;
+  // Remove all characters that are not digits, dots, or minus signs
+  const cleaned = raw.replace(/[^\d.-]/g, '');
+  const num = parseFloat(cleaned);
+  return isFinite(num) && num > 0 ? num : null;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Helper: Normalise a Textract date string to YYYY-MM-DD.
+// Textract may return dates in many formats:
+//   "8 May 2026", "08/05/26", "05-08-2026", "2026-05-08", etc.
+// Falls back to today's ISO date if parsing fails.
+// ───────────────────────────────────────────────────────────────
+const MONTH_MAP = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+function normaliseDate(raw, fallback) {
+  if (!raw || raw === 'Unknown') return fallback;
+
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+  // "8 May 2026" or "08 May 2026" or "May 8, 2026"
+  const wordy = raw.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (wordy) {
+    const [, day, mon, year] = wordy;
+    const m = MONTH_MAP[mon.slice(0, 3).toLowerCase()];
+    if (m !== undefined) {
+      return `${year}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  const wordyAlt = raw.match(/([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})/);
+  if (wordyAlt) {
+    const [, mon, day, year] = wordyAlt;
+    const m = MONTH_MAP[mon.slice(0, 3).toLowerCase()];
+    if (m !== undefined) {
+      return `${year}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  // Numeric formats: DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY etc.
+  // We assume DD/MM/YYYY (most common for Indian receipts)
+  const numericFull = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (numericFull) {
+    const [, dd, mm, yyyy] = numericFull;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  }
+
+  // DD/MM/YY short year
+  const numericShort = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2})$/);
+  if (numericShort) {
+    const [, dd, mm, yy] = numericShort;
+    const yyyy = parseInt(yy, 10) < 50 ? `20${yy}` : `19${yy}`;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  }
+
+  // Last resort: let JS try (may give wrong timezone on some runtimes)
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+
+  console.warn(`[normaliseDate] Could not parse date: "${raw}" — using fallback.`);
   return fallback;
 }
 
@@ -98,14 +172,24 @@ exports.handler = async function (event) {
     // with "Unknown" fields so the user can manually correct it later.
   }
 
-  // ── 3. Persist to DynamoDB ─────────────────────────────────
+  // ── 3. Persist to DynamoDB ─────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+  const parsedAmount = parseAmount(extractedData.totalAmount);
+  const normalisedDate = normaliseDate(extractedData.date, today);
+
+  console.log(`[processReceipt] Raw amount: "${extractedData.totalAmount}" → parsed: ${parsedAmount}`);
+  console.log(`[processReceipt] Raw date:   "${extractedData.date}" → normalised: ${normalisedDate}`);
+
   const expenseRecord = {
     id:        crypto.randomUUID(),
-    date:      extractedData.date,
-    merchant:  extractedData.merchantName,
-    amount:    extractedData.totalAmount,
+    date:      normalisedDate,
+    merchant:  extractedData.merchantName !== 'Unknown' ? extractedData.merchantName : 'Unknown',
+    amount:    parsedAmount !== null ? parsedAmount : 0,
+    category:  'Other',
     s3Key:     extractedData.s3Key,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source:    'receipt',
   };
 
   try {
